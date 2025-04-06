@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OptiFocus Prototype</title>
+  <style>
+    /*GENERAL STYLING*/
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #c2e9fb, #a1c4fd);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #213547;
+      font-size: 2em;
+    }
+
+    /*SIDEBAR MENU*/
+    .sidebar {
+      width: 280px;
+      background: #ffffffcc;
+      padding: 20px;
+      border-right: 2px solid #b0d4f1;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    }
+
+    .sidebar h3 {
+      margin-top: 20px;
+    }
+
+    /*MAIN*/
+    .main {
+      flex-grow: 1;
+      padding: 40px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timer {
+      font-size: 3em;
+      margin: 20px 0;
+      color: #ff6f61;
+      border: 8px solid #ff6f61;
+      border-radius: 50%;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #45a049;
+    }
+
+    .alert {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #fbd3d3;
+      color: #b22222;
+      display: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    input[type="text"], select {
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    input[type="text"] {
+      width: 70%;
+    }
+
+    .quote {
+      font-style: italic;
+      margin-top: 30px;
+      color: #5e5e5e;
+      background: #ffffffaa;
+      padding: 10px;
+      border-radius: 5px;
+      min-height: 50px;
+    }
+
+    .task-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .task-list ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .task-list li {
+      background: #fff;
+      padding: 8px 12px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<!--SIDEBAR SECTION-->
+  <div class="sidebar">
+    <h3>Focus Tips</h3>
+    <ul>
+      <li>Try the 25-5-25 Pomodoro cycle</li>
+      <li>Turn off all notifications</li>
+      <li>Set one clear goal</li>
+      <li>Use calming background music</li>
+      <li>Keep your phone in another room</li>
+    </ul>
+
+    <h3>Break Suggestions</h3>
+    <ul>
+      <li>Stretch or yoga</li>
+      <li>Walk outside</li>
+      <li>Breathe deeply</li>
+      <li>Drink water</li>
+      <li>Close your eyes briefly</li>
+    </ul>
+
+    <h3>User Stats</h3>
+    <p>Focus Sessions: <span id="focusCount">0</span></p>
+    <p>Breaks Taken: <span id="breakCount">0</span></p>
+  </div>
+
+  <!--MAIN SECTION-->
+  <div class="main">
+    <h1>Welcome to OptiFocus 🌟</h1>
+    <div class="timer" id="timer">25:00</div>
+
+    <button class="btn" onclick="startTimer()">🚀 Start Focus</button>
+    <button class="btn" onclick="startBreak()">☕ Start Break</button>
+    <button class="btn" onclick="triggerDistraction()">😵 Distraction</button>
+
+    <div class="section">
+      <input type="text" id="taskInput" placeholder="📝 New task...">
+      <button class="btn" onclick="saveTask()">Add Task</button>
+    </div>
+
+    <div class="task-list">
+      <h4>Your Tasks</h4>
+      <ul id="tasks"></ul>
+    </div>
+
+    <div>
+      <label for="mood">How are you feeling? 😊</label><br>
+      <select id="mood">
+        <option value="">Select</option>
+        <option value="motivated">Motivated</option>
+        <option value="tired">Tired</option>
+        <option value="stressed">Stressed</option>
+        <option value="chill">Chill</option>
+      </select>
+    </div>
+
+    <div class="alert" id="distractionAlert">😬 Try to refocus or take a short break.</div>
+    <div class="quote" id="quote">"Stay focused, stay sharp."</div>
+  </div>
+
+  <!--SCRIPT SECTION-->
+  <script>
+    let minutes = 25,
+        seconds = 0,
+        timerInterval,
+        focusCount = 0,
+        breakCount = 0,
+        quotes = [
+          "Push yourself, because no one else will.",
+          "Just keep going.",
+          "Discipline = progress.",
+          "Small progress is still progress.",
+          "Stay focused, stay sharp."
+        ],
+        currentQuoteIndex = 0;
+
+    const timer = document.getElementById('timer'),
+          quoteBox = document.getElementById('quote');
+
+    function updateQuote() {
+      quoteBox.textContent = quotes[currentQuoteIndex];
+      currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+    }
+    setInterval(updateQuote, 1800000);
+
+    function updateTimerDisplay() {
+      timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      minutes = 25;
+      seconds = 0;
+      updateTimerDisplay();
+      document.getElementById('focusCount').textContent = ++focusCount;
+      timerInterval = setInterval(runTimer, 1000);
+    }
+
+    function startBreak() {
+      clearInterval(timerInterval);
+      minutes = 5;
+      seconds = 0;
+      updateTimerDisplay();
+      document.getElementById('breakCount').textContent = ++breakCount;
+      timerInterval = setInterval(runTimer, 1000);
+    }
+
+    function runTimer() {
+      if (minutes === 0 && seconds === 0) {
+        clearInterval(timerInterval);
+        return;
+      }
+      if (seconds === 0) {
+        minutes--;
+        seconds = 59;
+      } else {
+        seconds--;
+      }
+      updateTimerDisplay();
+    }
+
+    function triggerDistraction() {
+      const alert = document.getElementById('distractionAlert');
+      alert.style.display = 'block';
+      setTimeout(() => alert.style.display = 'none', 4000);
+    }
+
+    function saveTask() {
+      const taskInput = document.getElementById('taskInput'),
+            taskText = taskInput.value.trim();
+      if (taskText) {
+        const taskList = document.getElementById('tasks'),
+              newTask = document.createElement('li');
+        newTask.textContent = taskText;
+        taskList.appendChild(newTask);
+        taskInput.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
