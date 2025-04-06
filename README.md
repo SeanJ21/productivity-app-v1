@@ -17,4 +17,4 @@
 - index.html – contains all HTML, styling, and functionality in one file
 
 ## Live Prototype
-[https://seanj21.github.io/productivity-app-v1/]
+https://seanj21.github.io/productivity-app-v1/
